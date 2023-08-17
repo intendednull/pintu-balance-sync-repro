@@ -19,6 +19,8 @@ struct Auth {
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
+    tracing_subscriber::fmt::init();
+
     let client = Client::new();
     let auth = Auth {
         key: std::env::var("PINTU_API_KEY")?,
@@ -39,12 +41,12 @@ async fn main() -> eyre::Result<()> {
                             match cancel_order(&order_id, &client, &auth).await {
                                 Ok(_) => {}
                                 Err(err) => {
-                                    eprintln!("error cancelling order: {}", err);
+                                    tracing::error!("error cancelling order: {}", err);
                                 }
                             }
                         }
                         Err(err) => {
-                            eprintln!("error creating order: {}", err);
+                            tracing::error!("error creating order: {}", err);
                         }
                     }
                 }
@@ -63,7 +65,7 @@ async fn main() -> eyre::Result<()> {
         "locked amount is not 0, locked base: {locked_base}, locked quote: {locked_quote}",
     );
 
-    println!("SUCCESS, no locked balance");
+    tracing::info!("SUCCESS, no locked balance");
 
     Ok(())
 }
@@ -71,7 +73,7 @@ async fn main() -> eyre::Result<()> {
 async fn post(path: &str, body: Value, client: &Client, auth: &Auth) -> eyre::Result<Value> {
     let body = sign_body(body, auth)?;
 
-    println!("sending body: {}", body);
+    tracing::info!("sending body: {}", body);
 
     let result = client
         .post(format!("{BASE_URL}{path}"))
@@ -84,7 +86,7 @@ async fn post(path: &str, body: Value, client: &Client, auth: &Auth) -> eyre::Re
         .json::<Value>()
         .await?;
 
-    println!("response: {}", result);
+    tracing::info!("response: {}", result);
 
     Ok(result)
 }
