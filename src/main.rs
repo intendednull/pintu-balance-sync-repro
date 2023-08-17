@@ -25,7 +25,7 @@ async fn main() -> eyre::Result<()> {
         secret: std::env::var("PINTU_API_SECRET")?,
     };
 
-    for _ in 0..5 {
+    for _ in 0..100 {
         futures::stream::iter(std::iter::repeat(()))
             .take(40)
             .for_each_concurrent(None, |_| {
@@ -62,6 +62,8 @@ async fn main() -> eyre::Result<()> {
         locked_base == 0 && locked_quote == 0,
         "locked amount is not 0, locked base: {locked_base}, locked quote: {locked_quote}",
     );
+
+    println!("SUCCESS, no locked balance");
 
     Ok(())
 }
