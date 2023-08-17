@@ -27,31 +27,15 @@ async fn main() -> eyre::Result<()> {
         secret: std::env::var("PINTU_API_SECRET")?,
     };
 
-    for _ in 0..100 {
-        futures::stream::iter(std::iter::repeat(()))
-            .take(40)
-            .for_each_concurrent(None, |_| {
-                let client = client.clone();
-                let auth = auth.clone();
+    for _ in 0..500 {
+        let mut ids = vec![];
+        for _ in 0..10 {
+            ids.push(create_limit_order(&client, &auth).await?);
+        }
 
-                async move {
-                    match create_limit_order(&client, &auth).await {
-                        Ok(order_id) => {
-                            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-                            match cancel_order(&order_id, &client, &auth).await {
-                                Ok(_) => {}
-                                Err(err) => {
-                                    tracing::error!("error cancelling order: {}", err);
-                                }
-                            }
-                        }
-                        Err(err) => {
-                            tracing::error!("error creating order: {}", err);
-                        }
-                    }
-                }
-            })
-            .await;
+        for id in ids {
+            cancel_order(&id, &client, &auth).await?;
+        }
     }
 
     tracing::info!("waiting for 10 seconds before cancelling any remaining orders");
@@ -77,7 +61,7 @@ async fn post(path: &str, body: Value, client: &Client, auth: &Auth) -> eyre::Re
 
     tracing::info!("sending body: {}", body);
 
-    let result = client
+    let response = client
         .post(format!("{BASE_URL}{path}"))
         .header("Content-Type", "application/json")
         .header("accept", "application/json")
@@ -85,12 +69,12 @@ async fn post(path: &str, body: Value, client: &Client, auth: &Auth) -> eyre::Re
         .json(&sign_body(body, auth)?)
         .send()
         .await?
-        .json::<Value>()
+        .text()
         .await?;
 
-    tracing::info!("response: {}", result);
+    tracing::info!("response: {}", response);
 
-    Ok(result)
+    Ok(serde_json::from_str(&response)?)
 }
 
 async fn create_limit_order(client: &Client, auth: &Auth) -> eyre::Result<String> {
