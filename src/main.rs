@@ -89,7 +89,7 @@ async fn create_limit_order(client: &Client, auth: &Auth) -> eyre::Result<String
             "side": "BUY",
             "time_in_force": "GTC",
             "exec_inst": "POST_ONLY",
-            "price": "25735213",
+            "price": "25700000",
             "size": "1",
         }),
     );
@@ -100,6 +100,7 @@ async fn create_limit_order(client: &Client, auth: &Auth) -> eyre::Result<String
         .and_then(|v| v.get("order_id"))
         .and_then(|v| v.as_str())
         .map(|v| v.to_string())
+        .filter(|v| !v.is_empty())
         .ok_or(eyre!("invalid response"))
 }
 
@@ -121,21 +122,21 @@ async fn cancel_order(id: &str, client: &Client, auth: &Auth) -> eyre::Result<()
         .ok_or(eyre!("invalid response"))
 }
 
-async fn get_locked(client: &Client, auth: &Auth) -> eyre::Result<(i32, i32)> {
+async fn get_locked(client: &Client, auth: &Auth) -> eyre::Result<(i64, i64)> {
     let body = format_body("private/get-account-information", &json!({}));
 
     let response = post("/v1/private/get-account-information", body, client, auth).await?;
     let assets = &response["data"]["assets"];
 
-    let get_locked = |value: &Value| -> eyre::Result<i32> {
+    let get_locked = |value: &Value| -> eyre::Result<i64> {
         let balance = value["balance"]
             .as_str()
             .ok_or(eyre!("invalid balance type"))?
-            .parse::<i32>()?;
+            .parse::<i64>()?;
         let available = value["available"]
             .as_str()
             .ok_or(eyre!("invalid available type"))?
-            .parse::<i32>()?;
+            .parse::<i64>()?;
 
         Ok(balance - available)
     };
