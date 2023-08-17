@@ -54,7 +54,9 @@ async fn main() -> eyre::Result<()> {
             .await;
     }
 
-    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+    tracing::info!("waiting for 10 seconds before cancelling any remaining orders");
+
+    tokio::time::sleep(std::time::Duration::from_secs(10)).await;
 
     cancel_all(&client, &auth).await?;
 
