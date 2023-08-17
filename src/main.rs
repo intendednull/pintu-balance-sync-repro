@@ -34,12 +34,15 @@ async fn main() -> eyre::Result<()> {
 
                 async move {
                     match create_limit_order(&client, &auth).await {
-                        Ok(order_id) => match cancel_order(&order_id, &client, &auth).await {
-                            Ok(_) => {}
-                            Err(err) => {
-                                eprintln!("error cancelling order: {}", err);
+                        Ok(order_id) => {
+                            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+                            match cancel_order(&order_id, &client, &auth).await {
+                                Ok(_) => {}
+                                Err(err) => {
+                                    eprintln!("error cancelling order: {}", err);
+                                }
                             }
-                        },
+                        }
                         Err(err) => {
                             eprintln!("error creating order: {}", err);
                         }
@@ -48,6 +51,10 @@ async fn main() -> eyre::Result<()> {
             })
             .await;
     }
+
+    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+
+    cancel_all(&client, &auth).await?;
 
     let (locked_base, locked_quote) = get_locked(&client, &auth).await?;
 
@@ -114,6 +121,23 @@ async fn cancel_order(id: &str, client: &Client, auth: &Auth) -> eyre::Result<()
     );
 
     post("/v1/private/cancel-order", body, client, auth)
+        .await?
+        .get("message")
+        .and_then(|v| v.as_str())
+        .filter(|&v| v == "SUCCESS")
+        .map(|_| ())
+        .ok_or(eyre!("invalid response"))
+}
+
+async fn cancel_all(client: &Client, auth: &Auth) -> eyre::Result<()> {
+    let body = format_body(
+        "private/cancel-all-orders",
+        &json!({
+            "symbol": "ETH-IDRT",
+        }),
+    );
+
+    post("/v1/private/cancel-all-orders", body, client, auth)
         .await?
         .get("message")
         .and_then(|v| v.as_str())
