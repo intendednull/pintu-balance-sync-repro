@@ -1,7 +1,7 @@
 use std::{borrow::Cow, collections::BTreeMap};
 
 use chrono::Utc;
-use eyre::{ensure, eyre};
+use eyre::eyre;
 use futures::stream::StreamExt;
 use hmac::{Hmac, Mac};
 use reqwest::Client;
