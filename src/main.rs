@@ -62,10 +62,10 @@ async fn main() -> eyre::Result<()> {
 
     let (locked_base, locked_quote) = get_locked(&client, &auth).await?;
 
-    ensure!(
-        locked_base == 0 && locked_quote == 0,
-        "locked amount is not 0, locked base: {locked_base}, locked quote: {locked_quote}",
-    );
+    if locked_base > 0 || locked_quote > 0 {
+        tracing::error!("FAILED, locked balance: {locked_base} ETH, {locked_quote} IDRT",);
+        return Err(eyre!("locked balance is not zero"));
+    }
 
     tracing::info!("SUCCESS, no locked balance");
 
