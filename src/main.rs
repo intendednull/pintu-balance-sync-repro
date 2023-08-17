@@ -2,7 +2,6 @@ use std::{borrow::Cow, collections::BTreeMap};
 
 use chrono::Utc;
 use eyre::eyre;
-use futures::stream::StreamExt;
 use hmac::{Hmac, Mac};
 use reqwest::Client;
 use serde_json::{json, Value};
