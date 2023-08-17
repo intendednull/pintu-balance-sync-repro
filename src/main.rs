@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 use sha2::Sha256;
 use uuid::Uuid;
 
-const BASE_URL: &str = "";
+const BASE_URL: &str = "https://api.uat.pintupro.com";
 
 #[derive(Clone)]
 struct Auth {
